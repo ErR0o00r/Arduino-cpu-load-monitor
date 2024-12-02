@@ -1,8 +1,9 @@
 #include <Windows.h>
 #include <iostream>
-#include <string>
+#include <thread>
+#include <conio.h>
 
-#define DEBUG
+//#define DEBUG
 
 enum CPU_LOAD {
     MIN = 'L', // 0-40%
@@ -36,8 +37,10 @@ CPU_LOAD GetCPULoad() {
 }
 
 void SendCPUInfoCom(CPU_LOAD cpu_usage) {
-    HANDLE serial = CreateFile(TEXT("COM8"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE serial = CreateFile(TEXT("COM8"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
+    // instead of com8, specify the com port to which your arduino is connected
     if (serial == INVALID_HANDLE_VALUE) {
+        
 #ifdef DEBUG
         std::cerr << "serial == INVALID_HANDLE_VALUE" << std::endl;
 #endif        
@@ -51,6 +54,7 @@ void SendCPUInfoCom(CPU_LOAD cpu_usage) {
     arduino.StopBits = ONE5STOPBITS;
     
     if(!SetCommState(serial, &arduino)) {
+
 #ifdef DEBUG
         std::cerr << "SetCommState error" << std::endl;
 #endif
@@ -68,6 +72,7 @@ void SendCPUInfoCom(CPU_LOAD cpu_usage) {
 
     WINBOOL result = WriteFile(serial, (char*)&cpu_usage, sizeof(char), &bytes_write, NULL);
     if(!result) {
+
 #ifdef DEBUG
         std::cerr << "!WriteFile" << std::endl;
 #endif
@@ -78,6 +83,14 @@ void SendCPUInfoCom(CPU_LOAD cpu_usage) {
 }
 
 int main() {
-    SendCPUInfoCom(GetCPULoad());
+    std::thread com_thread([]() {
+        while(true) {
+            SendCPUInfoCom(GetCPULoad());
+            Sleep(1000);
+        }
+    });
+    std::cout << "To exit, press e: " << std::endl;
+    while( _getch() != 'e' );
+    com_thread.detach();
     return 0;
 }
