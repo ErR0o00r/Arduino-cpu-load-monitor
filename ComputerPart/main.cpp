@@ -33,7 +33,7 @@ CPU_LOAD GetCPULoad() {
 
     if (cpu_usage < 40) return CPU_LOAD::MIN;
     if (cpu_usage >= 40 && cpu_usage < 80) return CPU_LOAD::MID;
-    if (cpu_usage >=80) return CPU_LOAD::MAX;
+    if (cpu_usage >= 80) return CPU_LOAD::MAX;
 }
 
 void SendCPUInfoCom(CPU_LOAD cpu_usage) {
